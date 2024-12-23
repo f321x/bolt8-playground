@@ -70,7 +70,7 @@ async def main():
         server_cb = partial(cb, server_key=server_key)
         server = await asyncio.start_server(server_cb, '127.0.0.1', port=8080)
         print(f"serving on {server_key.get_public_key_hex()}@{server.sockets[0].getsockname()[0]}"
-              f":{server.sockets[0].getsockname()[1]}")
+              f":{server.sockets[0].getsockname()[1]}", file=sys.stderr)
 
         async with server:
             await server.serve_forever()
@@ -80,15 +80,13 @@ async def main():
     client_key = ecc.ECPrivkey.generate_random_key()
     file_path = None
     if len(sys.argv) == 2:  # only connection string, read from stdin
-        node_id, remaining = extract_nodeid(sys.argv[1])
+        peer_addr = LNPeerAddr.from_str(sys.argv[1])
     else: # assuming filename, connection string
         file_path = sys.argv[1]
-        node_id, remaining = extract_nodeid(sys.argv[2])
-    host, port = split_host_port(remaining)
-    peer_addr = LNPeerAddr(host, int(port), node_id)
+        peer_addr = LNPeerAddr.from_str(sys.argv[2])
     t = LNTransport(client_key.get_secret_bytes(), peer_addr, e_proxy=None)
     await t.handshake()
-    print(f"Connected to {node_id.hex()}", file=sys.stderr)
+    print(f"Connected to {peer_addr.pubkey.hex()}", file=sys.stderr)
 
     if file_path:
         with open(file_path, "rb") as f:
