@@ -1,0 +1,4 @@
+aiorpcx>=0.22.0,<0.24
+electrum_ecc
+cryptography
+
